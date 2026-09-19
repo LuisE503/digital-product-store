@@ -14,12 +14,6 @@ I created this software to practice building a complete web application with Rea
 - Functional form with required fields and email validation.
 - Public GitHub repository with documented source code.
 
-## Software Demo Video
-
-The final 4-5 minute video must show my face, demonstrate the application running, and walk through how the code works.
-
-[Software Demo Video](VIDEO_LINK_TO_ADD_AFTER_RECORDING)
-
 # Development Environment
 
 I used Visual Studio Code, Node.js, npm, Vite, React, React Router, HTML, CSS, and JavaScript. Vite provides the development server and production build process. React provides the component model and state management, while React Router provides client-side navigation without full-page reloads.
