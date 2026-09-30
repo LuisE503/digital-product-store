@@ -1,18 +1,42 @@
-import { createContext, useContext, useMemo, useState } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { BrowserRouter, Link, NavLink, Route, Routes, useNavigate, useParams } from 'react-router-dom'
 import './App.css'
-
-const products = [
-  { id: 1, name: 'Signal Notes', type: 'Template', price: 12, tone: 'coral', description: 'A focused workspace for turning loose ideas into clear next steps.', features: ['Weekly planning board', 'Decision journal', 'Printable review pages'] },
-  { id: 2, name: 'Field Guide', type: 'Guide', price: 18, tone: 'teal', description: 'A practical digital guide for building a calmer creative practice.', features: ['Six learning chapters', 'Reflection prompts', 'Progress checklist'] },
-  { id: 3, name: 'Studio Kit', type: 'Bundle', price: 29, tone: 'gold', description: 'A compact set of tools for planning, presenting, and shipping work.', features: ['Three editable templates', 'Project launch checklist', 'Client handoff notes'] },
-  { id: 4, name: 'Quiet Launch', type: 'Mini-course', price: 24, tone: 'plum', description: 'A short, practical course for sharing a project with confidence.', features: ['Four short lessons', 'Launch worksheet', 'Email announcement kit'] },
-]
+import { supabase } from './lib/supabase'
 
 const CartContext = createContext(null)
+const ProductContext = createContext(null)
 
 // Share cart data with every page without prop drilling.
 function useCart() { return useContext(CartContext) }
+
+// Share the database-backed catalog with every product page.
+function useProducts() { return useContext(ProductContext) }
+
+// Load products from Supabase and expose loading and error states to the UI.
+function ProductProvider({ children }) {
+  const [products, setProducts] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    async function loadProducts() {
+      if (!supabase) {
+        setError('Supabase is not configured. Add the variables from .env.example to load the catalog.')
+        setLoading(false)
+        return
+      }
+
+      const { data, error: queryError } = await supabase.from('products').select('*').order('id')
+      if (queryError) setError(queryError.message)
+      else setProducts(data)
+      setLoading(false)
+    }
+
+    loadProducts()
+  }, [])
+
+  return <ProductContext.Provider value={{ products, loading, error }}>{children}</ProductContext.Provider>
+}
 
 // Keep the cart state alive while the user moves between client-side routes.
 function CartProvider({ children }) {
@@ -50,14 +74,25 @@ function ProductCard({ product }) {
   return <article className="product-card"><Link to={`/products/${product.id}`} className={`product-art ${product.tone}`} aria-label={`View ${product.name}`}><span>{product.type}</span><strong>{product.name}</strong><i>SS / {String(product.id).padStart(2, '0')}</i></Link><div className="product-info"><div><p className="eyebrow">{product.type}</p><h3>{product.name}</h3><p>{product.description}</p></div><div className="product-buy"><strong>${product.price}</strong><button type="button" onClick={() => addToCart(product)}>Add to bag</button></div></div></article>
 }
 
+// Give the user a clear explanation when the database is loading or unavailable.
+function ProductStatus({ loading, error }) {
+  if (loading) return <main className="empty-state"><p className="eyebrow">Catalog</p><h1>Loading the<br /><em>collection.</em></h1></main>
+  if (error) return <main className="empty-state"><p className="eyebrow">Catalog unavailable</p><h1>Connection<br /><em>required.</em></h1><p>{error}</p></main>
+  return null
+}
+
 // Compose the storefront landing page from reusable content sections.
 function Home() {
+  const { products, loading, error } = useProducts()
+  if (loading || error) return <ProductStatus loading={loading} error={error} />
   return <main><section className="hero-section"><div className="hero-copy"><p className="eyebrow">A small shop for thoughtful work</p><h1>Make space for<br /><em>better ideas.</em></h1><p className="hero-text">Digital templates, guides, and tools for people who want to make meaningful work without making life noisier.</p><Link className="primary-button" to="/shop">Explore the collection <span>-&gt;</span></Link></div><div className="hero-art"><div className="sun"></div><div className="hero-card"><span>FIELD NOTE / 001</span><strong>Start<br />somewhere.</strong><small>Tools for the work in progress.</small></div><div className="scribble">take<br />your<br />time</div></div></section><section className="featured-section"><div className="section-heading"><div><p className="eyebrow">The edit</p><h2>Good tools, less noise.</h2></div><Link to="/shop">View all products -&gt;</Link></div><div className="product-grid">{products.slice(0, 3).map((product) => <ProductCard key={product.id} product={product} />)}</div></section><section className="statement"><p className="eyebrow">Our point of view</p><h2>Useful can be beautiful.<br />Simple can be powerful.</h2></section></main>
 }
 
 // Filter the product catalog without leaving the current route.
 function Shop() {
+  const { products, loading, error } = useProducts()
   const [filter, setFilter] = useState('All')
+  if (loading || error) return <ProductStatus loading={loading} error={error} />
   const categories = ['All', ...new Set(products.map((product) => product.type))]
   const visibleProducts = filter === 'All' ? products : products.filter((product) => product.type === filter)
   return <main className="page"><div className="page-heading"><p className="eyebrow">Browse the collection</p><h1>Tools for the<br /><em>work in progress.</em></h1></div><div className="filter-row" aria-label="Filter products">{categories.map((category) => <button className={filter === category ? 'filter active' : 'filter'} type="button" key={category} onClick={() => setFilter(category)}>{category}</button>)}</div><div className="product-grid">{visibleProducts.map((product) => <ProductCard key={product.id} product={product} />)}</div></main>
@@ -66,8 +101,10 @@ function Shop() {
 // Show one catalog item and its available download features.
 function ProductDetails() {
   const { id } = useParams()
+  const { products, loading, error } = useProducts()
   const product = products.find((item) => item.id === Number(id))
   const { addToCart } = useCart()
+  if (loading || error) return <ProductStatus loading={loading} error={error} />
   if (!product) return <main className="empty-state"><h1>Product not found.</h1><Link to="/shop">Return to shop</Link></main>
   return <main className="detail-page"><Link className="back-link" to="/shop">&lt;- Back to shop</Link><div className="detail-layout"><div className={`detail-art product-art ${product.tone}`}><span>{product.type}</span><strong>{product.name}</strong><i>SS / {String(product.id).padStart(2, '0')}</i></div><div className="detail-copy"><p className="eyebrow">{product.type}</p><h1>{product.name}</h1><p className="detail-description">{product.description}</p><div className="detail-price">${product.price}</div><button className="primary-button" type="button" onClick={() => addToCart(product)}>Add to bag <span>-&gt;</span></button><h3>Inside the download</h3><ul>{product.features.map((feature) => <li key={feature}>{feature}</li>)}</ul></div></div></main>
 }
@@ -80,8 +117,31 @@ function About() {
 // Validate a contact request and provide immediate submission feedback.
 function Contact() {
   const [submitted, setSubmitted] = useState(false)
-  function handleSubmit(event) { event.preventDefault(); setSubmitted(true) }
-  return <main className="page contact-page"><div className="contact-intro"><p className="eyebrow">Say hello</p><h1>Have a question<br /><em>or an idea?</em></h1><p>We would love to hear what you are working on.</p></div><form className="contact-form" onSubmit={handleSubmit}><label>Name<input required name="name" placeholder="Your name" /></label><label>Email<input required type="email" name="email" placeholder="you@example.com" /></label><label>Message<textarea required name="message" rows="5" placeholder="Tell us a little more..."></textarea></label><button className="primary-button" type="submit">{submitted ? 'Message sent' : 'Send message'} <span>-&gt;</span></button>{submitted && <p className="success-message">Thanks. We will be in touch soon.</p>}</form></main>
+  const [error, setError] = useState('')
+
+  // Validate and persist the contact form before showing success feedback.
+  async function handleSubmit(event) {
+    event.preventDefault()
+    setSubmitted(false)
+    setError('')
+    const form = event.currentTarget
+    const formData = new FormData(form)
+    const message = Object.fromEntries(formData.entries())
+
+    if (!supabase) {
+      setError('Supabase is not configured. Add the environment variables before submitting.')
+      return
+    }
+
+    const { error: insertError } = await supabase.from('contact_messages').insert(message)
+    if (insertError) setError(insertError.message)
+    else {
+      setSubmitted(true)
+      form.reset()
+    }
+  }
+
+  return <main className="page contact-page"><div className="contact-intro"><p className="eyebrow">Say hello</p><h1>Have a question<br /><em>or an idea?</em></h1><p>We would love to hear what you are working on.</p></div><form className="contact-form" onSubmit={handleSubmit}><label>Name<input required name="name" placeholder="Your name" /></label><label>Email<input required type="email" name="email" placeholder="you@example.com" /></label><label>Message<textarea required name="message" rows="5" placeholder="Tell us a little more..."></textarea></label><button className="primary-button" type="submit">{submitted ? 'Message sent' : 'Send message'} <span>-&gt;</span></button>{submitted && <p className="success-message">Thanks. We will be in touch soon.</p>}{error && <p className="error-message">{error}</p>}</form></main>
 }
 
 // Display cart contents and calculate the current order summary.
@@ -94,7 +154,7 @@ function Cart() {
 
 // Define the complete client-side route map for the application.
 function App() {
-  return <BrowserRouter><CartProvider><Header /><Routes><Route path="/" element={<Home />} /><Route path="/shop" element={<Shop />} /><Route path="/products/:id" element={<ProductDetails />} /><Route path="/about" element={<About />} /><Route path="/contact" element={<Contact />} /><Route path="/cart" element={<Cart />} /></Routes><footer><span>Soft Signal / 2026</span><span>Digital goods for thoughtful work</span></footer></CartProvider></BrowserRouter>
+  return <BrowserRouter><ProductProvider><CartProvider><Header /><Routes><Route path="/" element={<Home />} /><Route path="/shop" element={<Shop />} /><Route path="/products/:id" element={<ProductDetails />} /><Route path="/about" element={<About />} /><Route path="/contact" element={<Contact />} /><Route path="/cart" element={<Cart />} /></Routes><footer><span>Soft Signal / 2026</span><span>Digital goods for thoughtful work</span></footer></CartProvider></ProductProvider></BrowserRouter>
 }
 
 export default App

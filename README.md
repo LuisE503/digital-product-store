@@ -4,6 +4,8 @@ Soft Signal is a responsive digital product storefront. Visitors can browse a co
 
 I created this software to practice building a complete web application with React. The project demonstrates client-side routing, reusable UI components, state management, form validation, responsive CSS, and a multi-page user experience.
 
+The product catalog is loaded from Supabase instead of being hardcoded in the React component. Contact form submissions are also saved in Supabase.
+
 ## Module Requirements Demonstrated
 
 - Multi-page application structure using React Router.
@@ -12,6 +14,9 @@ I created this software to practice building a complete web application with Rea
 - React state for product filtering, contact form submission, and shopping cart quantities.
 - Responsive design for desktop and mobile screen sizes.
 - Functional form with required fields and email validation.
+- Product records loaded from a Supabase PostgreSQL table.
+- Contact messages persisted in a Supabase PostgreSQL table.
+- Loading and error states for database operations.
 - Public GitHub repository with documented source code.
 
 # Development Environment
@@ -31,6 +36,31 @@ To validate the production version:
 npm run build
 npm run lint
 ```
+
+## Supabase Setup
+
+1. Create a project at [supabase.com](https://supabase.com/).
+2. Run [`public/supabase-schema.sql`](public/supabase-schema.sql) in the Supabase SQL Editor. This creates the `products` and `contact_messages` tables, their policies, and starter products.
+3. Copy `.env.example` to `.env` and add the project URL and anonymous key:
+
+```env
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+```
+
+Do not put a Supabase service-role key in this project. The `.env` file is ignored by Git.
+
+## Data Flow
+
+`ProductProvider` requests rows from the `products` table when the application starts. `Home`, `Shop`, and `ProductDetails` read those rows through the product context. `Shop` filters the returned rows based on the selected category.
+
+When the contact form is submitted, `Contact.handleSubmit` validates the browser form, creates an object with `FormData`, inserts it into `contact_messages`, and displays success only after Supabase confirms the insert. Database errors are displayed instead of being presented as successful submissions.
+
+# Video
+
+Video link: **Add the final 4-5 minute YouTube link here before submitting.**
+
+The video must show my face, demonstrate the running application, and explain the React context, routes, Supabase query, contact-message insert, and error handling.
 
 # Useful Websites
 
