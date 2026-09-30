@@ -16,6 +16,8 @@ The product catalog is loaded from Supabase instead of being hardcoded in the Re
 - Functional form with required fields and email validation.
 - Product records loaded from a Supabase PostgreSQL table.
 - Contact messages persisted in a Supabase PostgreSQL table.
+- Product reviews stored in a related Supabase table.
+- Complete cloud database CRUD operations: retrieve, insert, update, and delete reviews.
 - Loading and error states for database operations.
 - Public GitHub repository with documented source code.
 
@@ -40,8 +42,9 @@ npm run lint
 ## Supabase Setup
 
 1. Create a project at [supabase.com](https://supabase.com/).
-2. Run [`public/supabase-schema.sql`](public/supabase-schema.sql) in the Supabase SQL Editor. This creates the `products` and `contact_messages` tables, their policies, and starter products.
-3. Copy `.env.example` to `.env` and add the project URL and anonymous key:
+2. For a new database, run [`public/supabase-schema.sql`](public/supabase-schema.sql) in the Supabase SQL Editor. This creates the `products`, `contact_messages`, and related `reviews` tables, their policies, and starter products.
+3. For the existing Soft Signal database, run [`public/reviews-migration.sql`](public/reviews-migration.sql) to add the related reviews table and CRUD policies.
+4. Copy `.env.example` to `.env` and add the project URL and anonymous key:
 
 ```env
 VITE_SUPABASE_URL=https://your-project.supabase.co
@@ -55,6 +58,8 @@ Do not put a Supabase service-role key in this project. The `.env` file is ignor
 `ProductProvider` requests rows from the `products` table when the application starts. `Home`, `Shop`, and `ProductDetails` read those rows through the product context. `Shop` filters the returned rows based on the selected category.
 
 When the contact form is submitted, `Contact.handleSubmit` validates the browser form, creates an object with `FormData`, inserts it into `contact_messages`, and displays success only after Supabase confirms the insert. Database errors are displayed instead of being presented as successful submissions.
+
+The product details page demonstrates complete CRUD operations for the related `reviews` table. `ReviewManager` retrieves reviews for a product, inserts new reviews, updates an existing review, and deletes a review after confirmation. The `reviews.product_id` foreign key relates every review to a product in the `products` table.
 
 # Video
 

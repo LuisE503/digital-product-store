@@ -98,6 +98,94 @@ function Shop() {
   return <main className="page"><div className="page-heading"><p className="eyebrow">Browse the collection</p><h1>Tools for the<br /><em>work in progress.</em></h1></div><div className="filter-row" aria-label="Filter products">{categories.map((category) => <button className={filter === category ? 'filter active' : 'filter'} type="button" key={category} onClick={() => setFilter(category)}>{category}</button>)}</div><div className="product-grid">{visibleProducts.map((product) => <ProductCard key={product.id} product={product} />)}</div></main>
 }
 
+// Retrieve reviews for a product through the related Supabase table.
+async function fetchProductReviews(productId) {
+  if (!supabase) return { data: null, error: new Error('Supabase is not configured.') }
+  return supabase
+    .from('reviews')
+    .select('*')
+    .eq('product_id', productId)
+    .order('created_at', { ascending: false })
+}
+
+// Manage cloud reviews so the product page demonstrates complete CRUD operations.
+function ReviewManager({ productId }) {
+  const emptyForm = { reviewer_name: '', rating: 5, comment: '' }
+  const [reviews, setReviews] = useState([])
+  const [form, setForm] = useState(emptyForm)
+  const [editingId, setEditingId] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    let active = true
+    fetchProductReviews(productId).then(({ data, error: queryError }) => {
+      if (!active) return
+      if (queryError) setError(queryError.message)
+      else setReviews(data)
+      setLoading(false)
+    })
+
+    return () => { active = false }
+  }, [productId])
+
+  // Refresh the review list after a create, update, or delete operation.
+  async function loadReviews() {
+    setLoading(true)
+    const { data, error: queryError } = await fetchProductReviews(productId)
+    if (queryError) setError(queryError.message)
+    else setReviews(data)
+    setLoading(false)
+  }
+
+  // Update the local review form as the user types.
+  function handleChange(event) {
+    const { name, value } = event.target
+    setForm((current) => ({ ...current, [name]: name === 'rating' ? Number(value) : value }))
+  }
+
+  // Insert a new review or update the selected review in Supabase.
+  async function handleSubmit(event) {
+    event.preventDefault()
+    setError('')
+    const payload = { ...form, product_id: productId }
+    const response = editingId
+      ? await supabase.from('reviews').update(payload).eq('id', editingId)
+      : await supabase.from('reviews').insert(payload)
+
+    if (response.error) {
+      setError(response.error.message)
+      return
+    }
+
+    setForm(emptyForm)
+    setEditingId(null)
+    await loadReviews()
+  }
+
+  // Load an existing review into the form for editing.
+  function startEditing(review) {
+    setEditingId(review.id)
+    setForm({ reviewer_name: review.reviewer_name, rating: review.rating, comment: review.comment })
+  }
+
+  // Delete a review after the user confirms the destructive action.
+  async function deleteReview(id) {
+    if (!window.confirm('Delete this review?')) return
+    const { error: deleteError } = await supabase.from('reviews').delete().eq('id', id)
+    if (deleteError) setError(deleteError.message)
+    else await loadReviews()
+  }
+
+  // Cancel editing and restore the empty review form.
+  function cancelEditing() {
+    setEditingId(null)
+    setForm(emptyForm)
+  }
+
+  return <section className="reviews-section"><div className="section-heading"><div><p className="eyebrow">Cloud reviews</p><h2>What people are saying.</h2></div><span>{reviews.length} review{reviews.length === 1 ? '' : 's'}</span></div>{loading ? <p className="review-status">Loading reviews...</p> : <div className="review-list">{reviews.length === 0 && <p className="review-status">No reviews yet. Add the first one.</p>}{reviews.map((review) => <article className="review-item" key={review.id}><div><strong>{review.reviewer_name}</strong><span className="review-stars">{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</span><p>{review.comment}</p></div><div className="review-actions"><button type="button" onClick={() => startEditing(review)}>Edit</button><button type="button" onClick={() => deleteReview(review.id)}>Delete</button></div></article>)}</div>}<form className="review-form" onSubmit={handleSubmit}><p className="eyebrow">{editingId ? 'Edit your review' : 'Add a review'}</p><label>Name<input required name="reviewer_name" value={form.reviewer_name} onChange={handleChange} placeholder="Your name" /></label><label>Rating<select name="rating" value={form.rating} onChange={handleChange}><option value="5">5 - Excellent</option><option value="4">4 - Good</option><option value="3">3 - Average</option><option value="2">2 - Needs work</option><option value="1">1 - Poor</option></select></label><label>Comment<textarea required name="comment" value={form.comment} onChange={handleChange} rows="3" placeholder="Share your thoughts..."></textarea></label><div className="review-form-actions"><button className="primary-button" type="submit">{editingId ? 'Update review' : 'Save review'}</button>{editingId && <button type="button" onClick={cancelEditing}>Cancel</button>}</div>{error && <p className="error-message">{error}</p>}</form></section>
+}
+
 // Show one catalog item and its available download features.
 function ProductDetails() {
   const { id } = useParams()
@@ -106,7 +194,7 @@ function ProductDetails() {
   const { addToCart } = useCart()
   if (loading || error) return <ProductStatus loading={loading} error={error} />
   if (!product) return <main className="empty-state"><h1>Product not found.</h1><Link to="/shop">Return to shop</Link></main>
-  return <main className="detail-page"><Link className="back-link" to="/shop">&lt;- Back to shop</Link><div className="detail-layout"><div className={`detail-art product-art ${product.tone}`}><span>{product.type}</span><strong>{product.name}</strong><i>SS / {String(product.id).padStart(2, '0')}</i></div><div className="detail-copy"><p className="eyebrow">{product.type}</p><h1>{product.name}</h1><p className="detail-description">{product.description}</p><div className="detail-price">${product.price}</div><button className="primary-button" type="button" onClick={() => addToCart(product)}>Add to bag <span>-&gt;</span></button><h3>Inside the download</h3><ul>{product.features.map((feature) => <li key={feature}>{feature}</li>)}</ul></div></div></main>
+  return <main className="detail-page"><Link className="back-link" to="/shop">&lt;- Back to shop</Link><div className="detail-layout"><div className={`detail-art product-art ${product.tone}`}><span>{product.type}</span><strong>{product.name}</strong><i>SS / {String(product.id).padStart(2, '0')}</i></div><div className="detail-copy"><p className="eyebrow">{product.type}</p><h1>{product.name}</h1><p className="detail-description">{product.description}</p><div className="detail-price">${product.price}</div><button className="primary-button" type="button" onClick={() => addToCart(product)}>Add to bag <span>-&gt;</span></button><h3>Inside the download</h3><ul>{product.features.map((feature) => <li key={feature}>{feature}</li>)}</ul></div></div><ReviewManager productId={product.id} /></main>
 }
 
 // Explain the purpose and design values behind the storefront.
