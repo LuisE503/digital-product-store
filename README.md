@@ -1,8 +1,8 @@
-# Overview
+# Cloud Databases Module: Soft Signal
 
 Soft Signal is a responsive digital product storefront. Visitors can browse a collection of templates, guides, bundles, and mini-courses; filter products; open a product detail page; add products to a shopping bag; adjust quantities; and submit a contact form.
 
-I created this software to practice building a complete web application with React. The project demonstrates client-side routing, reusable UI components, state management, form validation, responsive CSS, and a multi-page user experience.
+I created this software to practice connecting a web application to a cloud database. The project demonstrates client-side routing, reusable UI components, state management, form validation, responsive CSS, and Supabase database operations.
 
 The product catalog is loaded from Supabase instead of being hardcoded in the React component. Contact form submissions are also saved in Supabase.
 
@@ -23,7 +23,7 @@ The product catalog is loaded from Supabase instead of being hardcoded in the Re
 
 # Development Environment
 
-I used Visual Studio Code, Node.js, npm, Vite, React, React Router, HTML, CSS, and JavaScript. Vite provides the development server and production build process. React provides the component model and state management, while React Router provides client-side navigation without full-page reloads.
+I used Visual Studio Code, Node.js, npm, Vite, React, React Router, Supabase, PostgreSQL, HTML, CSS, and JavaScript. Vite provides the development server and production build process. React provides the component model and state management, while Supabase provides the cloud PostgreSQL database and API used by the application.
 
 To install and run the project:
 
@@ -72,14 +72,16 @@ The video must show my face, demonstrate the running application, and explain th
 * [React Documentation](https://react.dev/)
 * [React Router Documentation](https://reactrouter.com/)
 * [Vite Documentation](https://vite.dev/guide/)
+* [Supabase JavaScript Documentation](https://supabase.com/docs/reference/javascript/introduction)
+* [Supabase Row Level Security Documentation](https://supabase.com/docs/guides/database/postgres/row-level-security)
 * [MDN Web Docs: Responsive Design](https://developer.mozilla.org/en-US/docs/Learn/CSS/CSS_layout/Responsive_Design)
 * [MDN Web Docs: Forms](https://developer.mozilla.org/en-US/docs/Learn/Forms)
 
 # Learning Strategies
 
-I learned this module by breaking the work into small, testable tasks. First, I studied React components, then I practiced client-side routing with a small set of pages. After that, I added the shopping cart state and tested one behavior at a time. I used official React, React Router, and Vite documentation as my primary sources and compared the expected behavior with the application in the browser.
+I learned this module by breaking the cloud database work into small, testable tasks. I studied Supabase tables, SQL schemas, Row Level Security, and the JavaScript client before connecting the application. I then tested product retrieval, contact-message insertion, and the related review CRUD operations one at a time. I used official React, Vite, and Supabase documentation and compared the expected database records with the application in the browser.
 
-When I encountered a problem, I first wrote down what I expected to happen, inspected the error, and made one focused change. This process helped me avoid changing several unrelated files at once. I also used responsive browser sizes to check that the layout remained usable on mobile and desktop screens.
+When I encountered a problem, I first wrote down what I expected to happen, inspected the error, and made one focused change. I tested missing configuration, invalid form data, failed database requests, and the complete create, read, update, and delete review flow. This process helped me avoid changing several unrelated files at once.
 
 # Time Log
 
