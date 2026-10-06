@@ -1,4 +1,4 @@
-# Cloud Databases Module: Soft Signal
+# Overview
 
 Soft Signal is a responsive digital product storefront. Visitors can browse a collection of templates, guides, bundles, and mini-courses; filter products; open a product detail page; add products to a shopping bag; adjust quantities; and submit a contact form.
 
@@ -63,9 +63,17 @@ The product details page demonstrates complete CRUD operations for the related `
 
 # Video
 
-Video link: **Add the final 4-5 minute YouTube link here before submitting.**
+[Software Demo Video](ADD_CLOUD_DATABASE_VIDEO_LINK_HERE)
 
-The video must show my face, demonstrate the running application, and explain the React context, routes, Supabase query, contact-message insert, and error handling.
+The video must show my face, demonstrate the running application, show the Supabase dashboard, and explain the React context, Supabase queries, contact-message insert, related review table, CRUD operations, and error handling.
+
+# Cloud Database
+
+This project uses Supabase, a hosted PostgreSQL cloud database with a JavaScript API. The application uses the Supabase publishable key from environment variables and never exposes a service-role key in the browser.
+
+The database contains three tables. The `products` table stores the product catalog. The `contact_messages` table stores messages submitted through the contact form. The `reviews` table stores product reviews and has a foreign key named `product_id` that relates each review to a record in `products`.
+
+The application demonstrates complete database operations. It retrieves products and reviews, inserts contact messages and reviews, updates reviews, and deletes reviews. Row Level Security policies control the permitted browser operations. The database schema is in [`public/supabase-schema.sql`](public/supabase-schema.sql), and [`public/reviews-migration.sql`](public/reviews-migration.sql) adds the related reviews table to an existing project.
 
 # Useful Websites
 
