@@ -6,7 +6,7 @@ The application starts with a Vite development server at `http://localhost:5173/
 
 I created this software to practice building a complete interactive web application with React. The project demonstrates reusable components, client-side routing, state management, form validation, responsive design, cloud data retrieval, and database-backed form submission.
 
-[Software Demo Video](ADD_WEB_APPS_VIDEO_LINK_HERE)
+[Software Demo Video](https://youtu.be/tTI0HvCA_0U?si=dj8-6-Yfgiyh-2rT)
 
 # Web Pages
 
@@ -18,6 +18,12 @@ I created this software to practice building a complete interactive web applicat
 - **Cart:** Displays products added by the user, lets the user adjust quantities, calculates totals, and links to Contact as the checkout step.
 
 The application uses React state and Supabase responses to determine what content appears. The product list, filters, detail page, contact confirmation, reviews, and cart totals all respond to application or user data.
+
+# Cloud Database Module Video
+
+The later Cloud Databases module extends this application with Supabase CRUD operations and a related `reviews` table. Its separate demonstration video is available here:
+
+[Cloud Databases Demo Video](https://www.youtube.com/watch?v=xFsgbIcay6E)
 
 # Development Environment
 
